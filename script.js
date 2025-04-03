@@ -1,89 +1,95 @@
-const board = document.getElementById("board");
-const cells = document.querySelectorAll(".cell");
-const statusText = document.getElementById("status");
-const restartButton = document.getElementById("restart");
-const playerXInput = document.getElementById("playerX");
-const playerOInput = document.getElementById("playerO");
-const startButton = document.getElementById("startGame");
-const gameContainer = document.querySelector(".game-container");
-const turnText = document.getElementById("turn");
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
 
-let currentPlayer = "X";
-let playerXName = "Player X";
-let playerOName = "Player O";
-let boardState = ["", "", "", "", "", "", "", "", ""];
-let gameActive = false;
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-// Winning combinations
-const winningCombinations = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], 
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], 
-    [0, 4, 8], [2, 4, 6]
-];
+let gameRef = db.ref("game");
+let playerName = "";
+let playerSymbol = "";
 
-// Start game
-startButton.addEventListener("click", () => {
-    if (playerXInput.value.trim() !== "") playerXName = playerXInput.value;
-    if (playerOInput.value.trim() !== "") playerOName = playerOInput.value;
+// Join Game
+document.getElementById("joinGame").addEventListener("click", () => {
+    playerName = document.getElementById("playerName").value.trim();
+    if (!playerName) return alert("Enter your name to join the game!");
     
-    gameContainer.style.display = "block";
-    turnText.textContent = `${playerXName}'s Turn (X)`;
-    gameActive = true;
-});
-
-// Handle cell click
-cells.forEach(cell => {
-    cell.addEventListener("click", () => {
-        const index = cell.dataset.index;
-        if (boardState[index] === "" && gameActive) {
-            boardState[index] = currentPlayer;
-            cell.textContent = currentPlayer;
-            checkWinner();
-            currentPlayer = currentPlayer === "X" ? "O" : "X";
-            turnText.textContent = currentPlayer === "X" ? `${playerXName}'s Turn (X)` : `${playerOName}'s Turn (O)`;
-        }
-    });
-});
-
-// Check winner
-function checkWinner() {
-    for (const combo of winningCombinations) {
-        const [a, b, c] = combo;
-        if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
-            gameActive = false;
-            const winner = boardState[a] === "X" ? playerXName : playerOName;
-            
-            // Highlight winning cells
-            cells[a].classList.add("winning-cell");
-            cells[b].classList.add("winning-cell");
-            cells[c].classList.add("winning-cell");
-
-            // Delay winner announcement for visibility
-            setTimeout(() => {
-                statusText.textContent = `${winner} Wins! 🎉`;
-                turnText.textContent = "";
-            }, 500);
-            
+    gameRef.once("value", snapshot => {
+        let data = snapshot.val() || {};
+        if (!data.playerX) {
+            gameRef.update({ playerX: playerName, currentTurn: "X", board: ["", "", "", "", "", "", "", "", ""] });
+            playerSymbol = "X";
+        } else if (!data.playerO) {
+            gameRef.update({ playerO: playerName });
+            playerSymbol = "O";
+        } else {
+            alert("Game is full!");
             return;
         }
-    }
+        document.querySelector(".game-container").style.display = "block";
+    });
+});
+
+// Handle Board Clicks
+document.querySelectorAll(".cell").forEach(cell => {
+    cell.addEventListener("click", () => {
+        gameRef.once("value", snapshot => {
+            let data = snapshot.val();
+            if (data.currentTurn !== playerSymbol || data.board[cell.dataset.index] !== "") return;
+            
+            data.board[cell.dataset.index] = playerSymbol;
+            data.currentTurn = playerSymbol === "X" ? "O" : "X";
+            gameRef.update({ board: data.board, currentTurn: data.currentTurn });
+        });
+    });
+});
+
+// Listen for Board Changes
+gameRef.on("value", snapshot => {
+    let data = snapshot.val();
+    if (!data) return;
     
-    if (!boardState.includes("")) {
-        gameActive = false;
-        statusText.textContent = "It's a Draw! 🤝";
-        turnText.textContent = "";
+    document.getElementById("turn").innerText = `Turn: ${data.currentTurn}`;
+    
+    document.querySelectorAll(".cell").forEach((cell, index) => {
+        cell.innerText = data.board[index];
+    });
+
+    // Check for Winner
+    let winner = checkWinner(data.board);
+    if (winner) {
+        document.getElementById("status").innerText = `${winner} Wins!`;
+        gameRef.remove();
     }
+});
+
+// Function to Check Winner
+function checkWinner(board) {
+    const winPatterns = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+        [0, 4, 8], [2, 4, 6]             // Diagonals
+    ];
+    
+    for (let pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            return board[a];
+        }
+    }
+    return null;
 }
 
-// Restart game
-restartButton.addEventListener("click", () => {
-    boardState.fill("");
-    cells.forEach(cell => {
-        cell.textContent = "";
-        cell.classList.remove("winning-cell");
-    });
-    statusText.textContent = "";
-    turnText.textContent = `${playerXName}'s Turn (X)`;
-    gameActive = true;
-    currentPlayer = "X";
+// Restart Game
+document.getElementById("restart").addEventListener("click", () => {
+    gameRef.remove();
+    window.location.reload();
 });
