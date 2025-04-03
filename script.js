@@ -11,7 +11,7 @@ appId: "1:1090880718932:web:e41285d7e9d977ef1145c1",
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
 let gameRef = db.ref("game");
