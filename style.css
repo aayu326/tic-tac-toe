@@ -5,7 +5,14 @@ body {
 }
 
 h1 {
-    color: #fa0000;
+    color: #333;
+}
+
+.designer {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 10px;
 }
 
 .player-input {
@@ -64,7 +71,7 @@ button:hover {
 }
 
 .winning-cell {
-    background-color: #4CAF50 !important; /* Green color for winning cells */
+    background-color: #4CAF50 !important;
     color: white;
 }
 
