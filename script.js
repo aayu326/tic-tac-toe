@@ -1,12 +1,13 @@
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCeZiBtG1jkxW1X16kmzTRaYA1W-b4bp3U",
+authDomain: "tic-tak-toe-5fb74.firebaseapp.com",
+databaseURL: "https://tic-tak-toe-5fb74-default-rtdb.firebaseio.com",
+projectId: "tic-tak-toe-5fb74",
+storageBucket: "tic-tak-toe-5fb74.firebasestorage.app",
+messagingSenderId: "1090880718932",
+appId: "1:1090880718932:web:e41285d7e9d977ef1145c1",
+
 };
 
 // Initialize Firebase
